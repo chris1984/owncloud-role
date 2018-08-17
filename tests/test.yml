@@ -1,0 +1,7 @@
+---
+- name: Install Owncloud
+  hosts: localhost
+  remote_user: root
+
+  roles:
+    - chris1984.owncloud_role

@@ -1,0 +1,141 @@
+---
+- name: Install @base package group
+  yum:
+    name: "@base"
+    state: present
+  when: owncloud_install_base
+
+- name: Update OS
+  yum:
+    name: '*'
+    state: latest
+  when: owncloud_update_os
+
+- name: Install yum-utils
+  yum:
+    name: yum-utils
+    state: present
+
+- name: Install unarchiving tools
+  yum:
+    name: bzip2
+    state: installed
+
+- name: Install Apache
+  yum:
+    name: httpd
+    state: latest
+  when: owncloud_setup_http
+
+- name: Start Apache
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+  when: owncloud_setup_http
+
+- name: Add PHP repo
+  yum:
+    name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    state: present
+  when: owncloud_setup_php
+
+- name: Enable 5.6 repo
+  shell: yum-config-manager --enable "{{ owncloud_php_version}}"
+  when: owncloud_setup_php
+
+- name: Add EPEL repo
+  yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    state: present
+  when: owncloud_setup_php
+
+- name: Setup PHP
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - php-xml
+    - php
+    - php-zip
+    - php-mbstring
+    - php-mysqlnd
+    - php-gd
+    - php-mcrypt
+    - php-cli
+    - php-curl
+    - php-mysql
+    - php-ldap
+    - php-fileinfo
+    - php-intl
+  when: owncloud_setup_php
+  notify:
+  - restart httpd
+
+- name: Install MariaDB
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - mariadb
+    - mariadb-server
+    - MySQL-python
+  when: owncloud_setup_db
+
+- name: Start MariaDB
+  service:
+    name: mariadb
+    state: started
+    enabled: yes
+  when: owncloud_setup_db
+
+- name: Create the database to be used in ownCloud
+  mysql_db:
+    name: "{{ owncloud_db_name }}"
+    state: present
+  when: owncloud_setup_db
+
+- name: Setup mysql user
+  mysql_user:
+    name: "{{ owncloud_db_user }}"
+    password: "{{ owncloud_db_password }}"
+    priv: '*.*:ALL,GRANT'
+    state: present
+  when: owncloud_setup_db
+
+- name: Removes all anonymous user accounts
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+  when: owncloud_setup_db
+
+- name: Install ownCloud repo key
+  rpm_key:
+    state: present
+    key: https://download.owncloud.org/download/repositories/production/CentOS_7/repodata/repomd.xml.key
+
+- name: Install ownCloud repo
+  get_url:
+    url: "http://download.owncloud.org/download/repositories/production/CentOS_7/ce:stable.repo"
+    dest: "/etc/yum.repos.d/ce:stable.repo"
+
+- name: Install ownCloud
+  yum:
+    name: owncloud-files
+    state: present
+
+- name: Setting SELinux context for writable dirs
+  file:
+    path: "{{ owncloud_owncloud_destination }}"
+    setype: httpd_sys_rw_content_t
+    recurse: yes
+
+- name: Setup ownership of ownCloud directory
+  file:
+    path: "{{ owncloud_owncloud_destination}}"
+    name: apache
+    group: apache
+    recurse: yes
+  notify:
+  - restart httpd

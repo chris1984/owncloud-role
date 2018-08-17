@@ -1,0 +1,11 @@
+---
+owncloud_setup_http: false
+owncloud_setup_php: true
+owncloud_update_os: false
+owncloud_setup_db: false
+owncloud_install_base: false
+owncloud_owncloud_destination: "/var/www/html"
+owncloud_php_version: "remi-php56"
+owncloud_db_password: "default"
+owncloud_db_user: "owncloud"
+owncloud_db_name: "owncloud"
