@@ -3,6 +3,11 @@ Role Name
 
 ownCloud is tool to share and synchronize your files across different devices. The role installs ownCloud, has the ability to update the OS and install httpd as well.
 
+Build Status
+============
+
+![alt text](https://travis-ci.org/chris1984/owncloud-role.svg?branch=master "Build Status")
+
 Requirements
 ------------
 
